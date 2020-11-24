@@ -19,6 +19,7 @@ class MirrorStatus:
     STATUS_FAILED = "Failed. Cleaning download"
     STATUS_CANCELLED = "Cancelled"
     STATUS_ARCHIVING = "Archiving"
+    STATUS_EXTRACTING = "Extracting"
 
 
 PROGRESS_MAX_SIZE = 100 // 8
@@ -61,7 +62,9 @@ def get_readable_file_size(size_in_bytes) -> str:
 def getDownloadByGid(gid):
     with download_dict_lock:
         for dl in download_dict.values():
-            if dl.status() != MirrorStatus.STATUS_UPLOADING and dl.status() != MirrorStatus.STATUS_ARCHIVING:
+            status = dl.status()
+            if status != MirrorStatus.STATUS_UPLOADING and status != MirrorStatus.STATUS_ARCHIVING\
+                    and status != MirrorStatus.STATUS_EXTRACTING:
                 if dl.gid() == gid:
                     return dl
     return None
@@ -91,7 +94,7 @@ def get_readable_message():
         for download in list(download_dict.values()):
             msg += f"<i>{download.name()}</i> - "
             msg += download.status()
-            if download.status() != MirrorStatus.STATUS_ARCHIVING:
+            if download.status() != MirrorStatus.STATUS_ARCHIVING and download.status() != MirrorStatus.STATUS_EXTRACTING:
                 msg += f"\n<code>{get_progress_bar_string(download)} {download.progress()}</code> of " \
                        f"{download.size()}" \
                        f" at {download.speed()}, ETA: {download.eta()} "
